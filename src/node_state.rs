@@ -18,7 +18,8 @@ use std::{
 };
 use winter_crypto::Hasher;
 
-use rand::{CryptoRng, RngCore};
+use rand::{CryptoRng, Rng, RngCore};
+
 
 /// The NodeLabel struct represents the label for a HistoryTreeNode.
 /// Since the label itself may have any number of zeros pre-pended,
@@ -27,14 +28,14 @@ use rand::{CryptoRng, RngCore};
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct NodeLabel {
     /// val stores a binary string as a u64
-    pub val: u64,
+    pub val: [u8; 32],
     /// len keeps track of how long the binary string is
     pub len: u32,
 }
 
 impl NodeLabel {
     /// Creates a new NodeLabel with the given value and len.
-    pub fn new(val: u64, len: u32) -> Self {
+    pub fn new(val: [u8; 32], len: u32) -> Self {
         NodeLabel { val, len }
     }
 
@@ -44,7 +45,7 @@ impl NodeLabel {
     }
 
     /// Gets the value of a NodeLabel.
-    pub fn get_val(&self) -> u64 {
+    pub fn get_val(&self) -> [u8; 32] {
         self.val
     }
 
@@ -52,17 +53,28 @@ impl NodeLabel {
     pub fn random<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
         // FIXME: should we always select length-64 labels?
         Self {
-            val: rng.next_u64(),
-            len: 64,
+            val: rng.gen(),
+            len: 256,
         }
     }
 
+    // /// Returns the bit at a specified index, and a 0 on an out of range index
+    // fn get_bit_at(&self, index: u32) -> u64 {
+    //     if index >= self.len {
+    //         return 0;
+    //     }
+    //     (self.val >> (self.len - index - 1)) & 1
+    // }
+
     /// Returns the bit at a specified index, and a 0 on an out of range index
-    fn get_bit_at(&self, index: u32) -> u64 {
+    fn get_bit_at(&self, index: u32) -> u8 {
         if index >= self.len {
             return 0;
         }
-        (self.val >> (self.len - index - 1)) & 1
+        let block_num: usize = (index / 8).try_into().unwrap();
+        let idx = index % 8;
+        let mut len_block = self.len % 8;
+        (self.val[block_num] >> (len_block - idx - 1)) & 1
     }
 
     /// Returns the prefix of a specified length, and the entire value on an out of range length
@@ -71,9 +83,17 @@ impl NodeLabel {
             return *self;
         }
         if len == 0 {
-            return Self::new(0, 0);
+            return Self::new([0u8; 32], 0);
         }
-        Self::new(self.val >> (self.len - len), len)
+        let block_num: usize = (len / 8).try_into().unwrap();
+        let idx = len % 8;
+        let mut len_block = self.len % 8;
+        let last_block = self.val[block_num] >> (len_block - idx);
+        let mut output_val = [0u8;32];
+        for block in 0..block_num+1 {
+            output_val[block] = self.val[block];
+        }
+        Self::new(output_val, len)
     }
 
     /// Takes as input a pointer to the caller and another NodeLabel,
@@ -125,7 +145,8 @@ impl NodeLabel {
 /// the generic type H.
 pub fn hash_label<H: Hasher>(label: NodeLabel) -> H::Digest {
     let byte_label_len = H::hash(&label.get_len().to_ne_bytes());
-    H::merge_with_int(byte_label_len, label.get_val())
+    let byte_label_val = H::hash(&label.get_val());
+    H::merge(&[byte_label_len, byte_label_val])
 }
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -169,8 +190,8 @@ impl Storable for HistoryNodeState {
             result.push(*byte);
         }
 
-        let parts: [[u8; 8]; 2] = [key.0.val.to_be_bytes(), key.1.to_be_bytes()];
-        for iarray in &parts {
+        let parts: [&[u8]; 2] = [&key.0.val, &key.1.to_be_bytes()];
+        for iarray in parts {
             for byte in iarray {
                 result.push(*byte);
             }
@@ -184,12 +205,12 @@ impl Storable for HistoryNodeState {
         }
 
         let len_bytes: [u8; 4] = bin[1..=4].try_into().expect("Slice with incorrect length");
-        let val_bytes: [u8; 8] = bin[5..=12].try_into().expect("Slice with incorrect length");
-        let epoch_bytes: [u8; 8] = bin[13..=20]
+        let val_bytes: [u8; 32] = bin[5..=36].try_into().expect("Slice with incorrect length");
+        let epoch_bytes: [u8; 8] = bin[37..=44]
             .try_into()
             .expect("Slice with incorrect length");
         let len = u32::from_be_bytes(len_bytes);
-        let val = u64::from_be_bytes(val_bytes);
+        let val = val_bytes;
         let epoch = u64::from_be_bytes(epoch_bytes);
 
         Ok(NodeStateKey(NodeLabel { len, val }, epoch))
