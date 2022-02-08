@@ -8,10 +8,11 @@
 
 use std::convert::TryInto;
 
+use winter_crypto::hashers::Sha3_256;
 use winter_crypto::{hashers::Blake3_256, Hasher};
 use winter_math::fields::f128::BaseElement;
 
-type Blake3 = Blake3_256<BaseElement>;
+type Blake3 = Sha3_256<BaseElement>;//Blake3_256<BaseElement>;
 
 use crate::serialization::from_digest;
 use crate::{

@@ -11,10 +11,11 @@ use crate::errors::{HistoryTreeNodeError, StorageError};
 use crate::serialization::{from_digest, to_digest};
 use crate::storage::types::{DbRecord, StorageType};
 use crate::storage::{Storable, Storage};
-use crate::{node_state::*, Direction, ARITY};
+use crate::{node_state::*, Direction, ARITY, EMPTY_HASH};
 use async_recursion::async_recursion;
 use log::debug;
 use serde::{Deserialize, Serialize};
+// use core::slice::SlicePattern;
 use std::convert::TryInto;
 use std::marker::{Send, Sync};
 use winter_crypto::Hasher;
@@ -374,7 +375,7 @@ impl HistoryTreeNode {
         epoch: u64,
     ) -> Result<H::Digest, HistoryTreeNodeError> {
         let epoch_node_state = self.get_state_at_epoch(storage, epoch).await?;
-        let mut new_hash = H::hash(&[]);
+        let mut new_hash = H::hash(&EMPTY_HASH);
         for child_index in 0..ARITY {
             new_hash = H::merge(&[
                 new_hash,
@@ -543,7 +544,7 @@ impl HistoryTreeNode {
             return self.get_value_at_epoch::<_, H>(storage, epoch).await;
         }
         let children = self.get_state_at_epoch(storage, epoch).await?.child_states;
-        let mut new_hash = H::hash(&[]);
+        let mut new_hash = H::hash(&EMPTY_HASH);
         for child in children.iter().take(ARITY) {
             let hash_val = optional_history_child_state_to_hash::<H>(child);
             new_hash = H::merge(&[new_hash, to_digest::<H>(&hash_val).unwrap()]);

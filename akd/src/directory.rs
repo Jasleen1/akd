@@ -486,9 +486,9 @@ mod tests {
         client::{key_history_verify, lookup_verify},
         storage::memory::AsyncInMemoryDatabase,
     };
-    use winter_crypto::hashers::Blake3_256;
+    use winter_crypto::hashers::{Blake3_256, Sha3_256};
     use winter_math::fields::f128::BaseElement;
-    type Blake3 = Blake3_256<BaseElement>;
+    type Blake3 = Sha3_256<BaseElement>;//Blake3_256<BaseElement>;
 
     // FIXME: #[test]
     #[allow(unused)]
@@ -522,6 +522,7 @@ mod tests {
         let lookup_proof = akd.lookup(AkdKey("hello".to_string())).await?;
         let current_azks = akd.retrieve_current_azks().await?;
         let root_hash = akd.get_root_hash::<Blake3>(&current_azks).await?;
+        println!("Tree:\n {:?}", current_azks);
         lookup_verify::<Blake3_256<BaseElement>>(
             root_hash,
             AkdKey("hello".to_string()),

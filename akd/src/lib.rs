@@ -278,6 +278,9 @@ pub mod tests;
 /// The arity of the underlying tree structure of the akd.
 pub const ARITY: usize = 2;
 
+/// The initial value to be included when hashing labels.
+pub const EMPTY_HASH: [u8; 32] = [0u8; 32];
+
 /// This type is used to indicate a direction for a
 /// particular node relative to its parent.
 pub type Direction = Option<usize>;

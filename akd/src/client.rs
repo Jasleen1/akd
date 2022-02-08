@@ -15,7 +15,7 @@ use crate::{
     node_state::{hash_label, NodeLabel},
     proof_structs::{HistoryProof, LookupProof, MembershipProof, NonMembershipProof, UpdateProof},
     storage::types::AkdKey,
-    Direction, ARITY,
+    Direction, ARITY, EMPTY_HASH,
 };
 
 /// Verifies membership, with respect to the root_hash
@@ -134,9 +134,11 @@ pub fn lookup_verify<H: Hasher>(
         ));
     }
     */
+    println!("Membership proofs being verified 1");
     verify_membership::<H>(root_hash, &existence_proof)?;
+    println!("Membership proofs being verified 2");
     verify_membership::<H>(root_hash, &marker_proof)?;
-
+    println!("Nonmembership proofs being verified");
     verify_nonmembership::<H>(root_hash, &freshness_proof)?;
 
     Ok(())
@@ -259,7 +261,7 @@ fn build_and_hash_layer<H: Hasher>(
 
 /// Helper for build_and_hash_layer
 fn hash_layer<H: Hasher>(hashes: Vec<H::Digest>, parent_label: NodeLabel) -> H::Digest {
-    let mut new_hash = H::hash(&[]); //hash_label::<H>(parent_label);
+    let mut new_hash = H::hash(&EMPTY_HASH); //hash_label::<H>(parent_label);
     for child_hash in hashes.iter().take(ARITY) {
         new_hash = H::merge(&[new_hash, *child_hash]);
     }

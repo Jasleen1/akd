@@ -479,7 +479,7 @@ impl Azks {
             prev_node = curr_node.label;
             let curr_state = curr_node.get_state_at_epoch(storage, epoch).await?;
             let mut labels = [NodeLabel::root(); ARITY - 1];
-            let mut hashes = [H::hash(&[0u8]); ARITY - 1];
+            let mut hashes = [to_digest::<H>(&optional_history_child_state_to_hash::<H>(&None)).unwrap(); ARITY - 1];
             let mut count = 0;
             let direction = dir.ok_or(AkdError::NoDirectionError)?;
             let next_state = curr_state.get_child_state_in_dir(direction);
