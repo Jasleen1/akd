@@ -9,10 +9,10 @@
 use std::convert::TryInto;
 
 use winter_crypto::hashers::Sha3_256;
-use winter_crypto::{hashers::Blake3_256, Hasher};
+use winter_crypto::Hasher;
 use winter_math::fields::f128::BaseElement;
 
-type Blake3 = Sha3_256<BaseElement>;//Blake3_256<BaseElement>;
+type Blake3 = Sha3_256<BaseElement>; //Blake3_256<BaseElement>;
 
 use crate::serialization::from_digest;
 use crate::{
@@ -370,18 +370,18 @@ async fn test_insert_single_leaf_root() -> Result<(), HistoryTreeNodeError> {
     let root_val = root.get_value::<_, Blake3>(&db).await?;
 
     let leaf_0_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[0b0u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[0b0u8])]),
         hash_label::<Blake3>(new_leaf.label),
     ]);
 
     let leaf_1_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[0b1u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[0b1u8])]),
         hash_label::<Blake3>(leaf_1.label),
     ]);
 
     let expected = Blake3::merge(&[
         Blake3::merge(&[
-            Blake3::merge(&[Blake3::hash(&[]), leaf_0_hash]),
+            Blake3::merge(&[Blake3::hash(&EMPTY_HASH), leaf_0_hash]),
             leaf_1_hash,
         ]),
         hash_label::<Blake3>(root.label),
@@ -423,23 +423,23 @@ async fn test_insert_single_leaf_below_root() -> Result<(), HistoryTreeNodeError
     .await?;
 
     let leaf_0_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[0b0u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[0b0u8])]),
         hash_label::<Blake3>(new_leaf.label),
     ]);
 
     let leaf_1_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[0b1u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[0b1u8])]),
         hash_label::<Blake3>(leaf_1.label),
     ]);
 
     let leaf_2_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[1u8, 1u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[1u8, 1u8])]),
         hash_label::<Blake3>(leaf_2.label),
     ]);
 
     let right_child_expected_hash = Blake3::merge(&[
         Blake3::merge(&[
-            Blake3::merge(&[Blake3::hash(&[]), leaf_2_hash]),
+            Blake3::merge(&[Blake3::hash(&EMPTY_HASH), leaf_2_hash]),
             leaf_1_hash,
         ]),
         hash_label::<Blake3>(NodeLabel::new(0b1u64, 1u32)),
@@ -467,7 +467,7 @@ async fn test_insert_single_leaf_below_root() -> Result<(), HistoryTreeNodeError
 
     let expected = Blake3::merge(&[
         Blake3::merge(&[
-            Blake3::merge(&[Blake3::hash(&[]), leaf_0_hash]),
+            Blake3::merge(&[Blake3::hash(&EMPTY_HASH), leaf_0_hash]),
             right_child_expected_hash,
         ]),
         hash_label::<Blake3>(root.label),
@@ -517,27 +517,27 @@ async fn test_insert_single_leaf_below_root_both_sides() -> Result<(), HistoryTr
     .await?;
 
     let leaf_0_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[0b0u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[0b0u8])]),
         hash_label::<Blake3>(new_leaf.label),
     ]);
 
     let leaf_1_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[0b1u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[0b1u8])]),
         hash_label::<Blake3>(leaf_1.label),
     ]);
     let leaf_2_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[0b1u8, 0b1u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[0b1u8, 0b1u8])]),
         hash_label::<Blake3>(leaf_2.label),
     ]);
 
     let leaf_3_hash = Blake3::merge(&[
-        Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&[0b0u8, 0b1u8])]),
+        Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&[0b0u8, 0b1u8])]),
         hash_label::<Blake3>(leaf_3.label),
     ]);
 
     let _right_child_expected_hash = Blake3::merge(&[
         Blake3::merge(&[
-            Blake3::merge(&[Blake3::hash(&[]), leaf_2_hash]),
+            Blake3::merge(&[Blake3::hash(&EMPTY_HASH), leaf_2_hash]),
             leaf_1_hash,
         ]),
         hash_label::<Blake3>(NodeLabel::new(0b1u64, 1u32)),
@@ -545,7 +545,7 @@ async fn test_insert_single_leaf_below_root_both_sides() -> Result<(), HistoryTr
 
     let _left_child_expected_hash = Blake3::merge(&[
         Blake3::merge(&[
-            Blake3::merge(&[Blake3::hash(&[]), leaf_0_hash]),
+            Blake3::merge(&[Blake3::hash(&EMPTY_HASH), leaf_0_hash]),
             leaf_3_hash,
         ]),
         hash_label::<Blake3>(NodeLabel::new(0b0u64, 1u32)),
@@ -573,7 +573,7 @@ async fn test_insert_single_leaf_below_root_both_sides() -> Result<(), HistoryTr
 
     // let expected = Blake3::merge(&[
     //     Blake3::merge(&[
-    //         Blake3::merge(&[Blake3::hash(&[]), left_child_expected_hash]),
+    //         Blake3::merge(&[Blake3::hash(&EMPTY_HASH), left_child_expected_hash]),
     //         right_child_expected_hash,
     //     ]),
     //     hash_label::<Blake3>(root.label),
@@ -600,7 +600,7 @@ async fn test_insert_single_leaf_full_tree() -> Result<(), HistoryTreeNodeError>
         )
         .await?;
         leaf_hashes.push(Blake3::merge(&[
-            Blake3::merge(&[Blake3::hash(&[]), Blake3::hash(&i.to_ne_bytes())]),
+            Blake3::merge(&[Blake3::hash(&EMPTY_HASH), Blake3::hash(&i.to_ne_bytes())]),
             hash_label::<Blake3>(new_leaf.label),
         ]));
         leaves.push(new_leaf);
@@ -613,7 +613,7 @@ async fn test_insert_single_leaf_full_tree() -> Result<(), HistoryTreeNodeError>
         let right_child_hash = leaf_hashes[2 * i + 1];
         layer_1_hashes.push(Blake3::merge(&[
             Blake3::merge(&[
-                Blake3::merge(&[Blake3::hash(&[]), left_child_hash]),
+                Blake3::merge(&[Blake3::hash(&EMPTY_HASH), left_child_hash]),
                 right_child_hash,
             ]),
             hash_label::<Blake3>(NodeLabel::new(j, 2u32)),
@@ -628,7 +628,7 @@ async fn test_insert_single_leaf_full_tree() -> Result<(), HistoryTreeNodeError>
         let right_child_hash = layer_1_hashes[2 * i + 1];
         layer_2_hashes.push(Blake3::merge(&[
             Blake3::merge(&[
-                Blake3::merge(&[Blake3::hash(&[]), left_child_hash]),
+                Blake3::merge(&[Blake3::hash(&EMPTY_HASH), left_child_hash]),
                 right_child_hash,
             ]),
             hash_label::<Blake3>(NodeLabel::new(j, 1u32)),
@@ -638,7 +638,7 @@ async fn test_insert_single_leaf_full_tree() -> Result<(), HistoryTreeNodeError>
 
     let expected = Blake3::merge(&[
         Blake3::merge(&[
-            Blake3::merge(&[Blake3::hash(&[]), layer_2_hashes[0]]),
+            Blake3::merge(&[Blake3::hash(&EMPTY_HASH), layer_2_hashes[0]]),
             layer_2_hashes[1],
         ]),
         hash_label::<Blake3>(root.label),

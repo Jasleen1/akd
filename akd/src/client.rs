@@ -41,6 +41,11 @@ pub fn verify_membership<H: Hasher>(
             final_hash,
             proof.parent_labels[i],
         )?;
+        
+        let mut cloned_labels = proof.sibling_labels[i].clone().to_vec();
+        let layer_label = if i == 0 { proof.label } else { proof.parent_labels[i] };
+        cloned_labels.insert(proof.dirs[i].ok_or(AkdError::NoDirectionError)?, layer_label);
+        println!("Labels {} = {:?}", i, cloned_labels);
     }
 
     if final_hash == root_hash {
@@ -61,7 +66,7 @@ pub fn verify_nonmembership<H: Hasher>(
     proof: &NonMembershipProof<H>,
 ) -> Result<bool, AkdError> {
     let mut verified = true;
-    let mut lcp_hash = H::hash(&[]);
+    let mut lcp_hash = H::hash(&EMPTY_HASH);
     let mut lcp_real = proof.longest_prefix_children_labels[0];
     for i in 0..ARITY {
         let child_hash = H::merge(&[

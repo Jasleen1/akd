@@ -257,6 +257,8 @@
 #![allow(clippy::multiple_crate_versions)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+use node_state::NodeLabel;
+
 extern crate rand;
 
 pub mod append_only_zks;
@@ -280,6 +282,9 @@ pub const ARITY: usize = 2;
 
 /// The initial value to be included when hashing labels.
 pub const EMPTY_HASH: [u8; 32] = [0u8; 32];
+
+/// The label for an empty node.
+pub const EMPTY_LABEL: node_state::NodeLabel = NodeLabel { val: 1, len: 0 };
 
 /// This type is used to indicate a direction for a
 /// particular node relative to its parent.

@@ -106,6 +106,8 @@ impl<S: Storage + Sync + Send> Directory<S> {
                 None => {
                     // no data found for the user
                     let latest_version = 1;
+                    println!("uname = {:?}", uname);
+                    println!("Version = {}", latest_version);
                     let label = Self::get_nodelabel::<H>(&uname, false, latest_version);
                     // Currently there's no blinding factor for the commitment.
                     // We'd want to change this later.
@@ -199,28 +201,39 @@ impl<S: Storage + Sync + Send> Directory<S> {
                 // Need to account for the case where the latest state is
                 // added but the database is in the middle of an update
                 let current_version = latest_st.version;
+                println!("Version num = {}", current_version);
+                println!("Uname = {:?}", uname);
                 let marker_version = 1 << get_marker_version(current_version);
                 let existent_label = Self::get_nodelabel::<H>(&uname, false, current_version);
+                println!("Existent label = {:?}", existent_label);
                 let non_existent_label = Self::get_nodelabel::<H>(&uname, true, current_version);
+                println!("Non existent label = {:?}", non_existent_label);
                 let marker_label = Self::get_nodelabel::<H>(&uname, false, marker_version);
+                println!("Marker label = {:?}", marker_label);
                 let current_azks = self.retrieve_current_azks().await?;
+                let existence_pf = current_azks
+                .get_membership_proof(&self.storage, existent_label, self.current_epoch)
+                .await?;
+                println!("1");
+                let marker_pf = current_azks
+                .get_membership_proof(&self.storage, marker_label, self.current_epoch)
+                .await?; 
+                println!("2");
+                let freshness_pf = current_azks
+                .get_non_membership_proof(
+                    &self.storage,
+                    non_existent_label,
+                    self.current_epoch,
+                )
+                .await?;
+                println!("3");
                 Ok(LookupProof {
                     epoch: self.current_epoch,
                     plaintext_value: latest_st.plaintext_val,
                     version: current_version,
-                    existence_proof: current_azks
-                        .get_membership_proof(&self.storage, existent_label, self.current_epoch)
-                        .await?,
-                    marker_proof: current_azks
-                        .get_membership_proof(&self.storage, marker_label, self.current_epoch)
-                        .await?,
-                    freshness_proof: current_azks
-                        .get_non_membership_proof(
-                            &self.storage,
-                            non_existent_label,
-                            self.current_epoch,
-                        )
-                        .await?,
+                    existence_proof: existence_pf,
+                    marker_proof: marker_pf,
+                    freshness_proof: freshness_pf,
                 })
             }
         }
@@ -488,7 +501,7 @@ mod tests {
     };
     use winter_crypto::hashers::{Blake3_256, Sha3_256};
     use winter_math::fields::f128::BaseElement;
-    type Blake3 = Sha3_256<BaseElement>;//Blake3_256<BaseElement>;
+    type Blake3 = Sha3_256<BaseElement>; //Blake3_256<BaseElement>;
 
     // FIXME: #[test]
     #[allow(unused)]
@@ -518,7 +531,6 @@ mod tests {
             false,
         )
         .await?;
-
         let lookup_proof = akd.lookup(AkdKey("hello".to_string())).await?;
         let current_azks = akd.retrieve_current_azks().await?;
         let root_hash = akd.get_root_hash::<Blake3>(&current_azks).await?;

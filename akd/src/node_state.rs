@@ -10,7 +10,7 @@
 use crate::serialization::from_digest;
 use crate::storage::types::StorageType;
 use crate::storage::Storable;
-use crate::{Direction, ARITY};
+use crate::{Direction, ARITY, EMPTY_HASH};
 use serde::{Deserialize, Serialize};
 use std::{
     convert::TryInto,
@@ -249,7 +249,7 @@ impl HistoryNodeState {
     pub fn new<H: Hasher>(key: NodeStateKey) -> Self {
         const INIT: Option<HistoryChildState> = None;
         HistoryNodeState {
-            value: from_digest::<H>(H::hash(&[0u8])).unwrap(),
+            value: from_digest::<H>(H::hash(&EMPTY_HASH)).unwrap(),
             child_states: [INIT; ARITY],
             key,
         }

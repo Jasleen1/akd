@@ -11,7 +11,7 @@ use crate::errors::{HistoryTreeNodeError, StorageError};
 use crate::serialization::{from_digest, to_digest};
 use crate::storage::types::{DbRecord, StorageType};
 use crate::storage::{Storable, Storage};
-use crate::{node_state::*, Direction, ARITY, EMPTY_HASH};
+use crate::{node_state::*, Direction, ARITY, EMPTY_HASH, EMPTY_LABEL};
 use async_recursion::async_recursion;
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -753,7 +753,8 @@ pub(crate) fn optional_history_child_state_to_hash<H: Hasher>(
 ) -> Vec<u8> {
     match input {
         Some(child_state) => child_state.hash_val.clone(),
-        None => from_digest::<H>(crate::utils::empty_node_hash::<H>()).unwrap(),
+        None => from_digest::<H>(crate::utils::empty_node_hash_with_label::<H>()).unwrap(),
+        //from_digest::<H>(crate::utils::empty_node_hash::<H>()).unwrap(),
     }
 }
 
@@ -762,7 +763,7 @@ pub(crate) fn optional_history_child_state_to_label(
 ) -> NodeLabel {
     match input {
         Some(child_state) => child_state.label,
-        None => NodeLabel::root(),
+        None => EMPTY_LABEL,
     }
 }
 
@@ -799,7 +800,7 @@ pub(crate) async fn get_leaf_node<H: Hasher, S: Storage + Sync + Send>(
 
     let mut new_state: HistoryNodeState =
         HistoryNodeState::new::<H>(NodeStateKey(node.label, birth_epoch));
-    new_state.value = from_digest::<H>(H::merge(&[H::hash(&[]), H::hash(value)]))?;
+    new_state.value = from_digest::<H>(H::merge(&[H::hash(&EMPTY_HASH), H::hash(value)]))?;
 
     set_state_map(storage, new_state).await?;
 
