@@ -10,7 +10,7 @@ use crate::{
     errors::HistoryTreeNodeError,
     history_tree_node::*,
     proof_structs::{AppendOnlyProof, MembershipProof, NonMembershipProof},
-    storage::{Storable, Storage},
+    storage::{Storable, Storage, types::{AkdLabel, AkdValue}},
 };
 
 use crate::serialization::to_digest;
@@ -19,7 +19,7 @@ use crate::storage::types::StorageType;
 use crate::{errors::*, history_tree_node::HistoryTreeNode, node_state::*, ARITY, *};
 use async_recursion::async_recursion;
 use log::{debug, info};
-use std::marker::{Send, Sync};
+use std::{marker::{Send, Sync}, fmt::Result};
 use tokio::time::Instant;
 use winter_crypto::{Digest, Hasher};
 
@@ -83,7 +83,21 @@ impl Azks {
 
         root.write_to_storage(storage).await?;
 
+        azks.init_leaves(storage, 5).await;
+
         Ok(azks)
+    }
+
+
+    pub async fn init_leaves<S: Storage + Sync + Send, H: Hasher>(&mut self, storage: &S,
+        initial_leaf_set_size: usize) -> Result<(), AkdError> {
+            let mut init_insertion_set = Vec::<(AkdLabel, AkdValue)>::new();
+            for i in 0..initial_leaf_set_size {
+                let mut label_i = "initial_leaf_".to_owned();
+                label_i.push_str(i.to_string());
+                init_insertion_set.push((AkdLabel(label_i), AkdValue("world".to_string())));
+            }
+            self.batch_insert_leaves(storage, init_insertion_set).await
     }
 
     /// Inserts a single leaf and is only used for testing, since batching is more efficient.

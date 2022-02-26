@@ -673,9 +673,9 @@ mod tests {
         },
         storage::memory::AsyncInMemoryDatabase,
     };
-    use winter_crypto::{hashers::Blake3_256, Digest};
+    use winter_crypto::{hashers::Sha3_256, Digest};
     use winter_math::fields::f128::BaseElement;
-    type Blake3 = Blake3_256<BaseElement>;
+    type Blake3 = Sha3_256<BaseElement>;
 
     #[tokio::test]
     async fn test_empty_tree_root_hash() -> Result<(), AkdError> {
@@ -730,7 +730,7 @@ mod tests {
         let current_azks = akd.retrieve_current_azks().await?;
         let root_hash = akd.get_root_hash::<Blake3>(&current_azks).await?;
         let vrf_pk = akd.get_public_key()?;
-        lookup_verify::<Blake3_256<BaseElement>, HardCodedClientVRF>(
+        lookup_verify::<Blake3, HardCodedClientVRF>(
             vrf_pk,
             root_hash,
             AkdLabel("hello".to_string()),
