@@ -83,7 +83,7 @@ impl Azks {
 
         root.write_to_storage(storage).await?;
 
-        azks.init_leaves(storage, 5).await;
+        azks.init_leaves(storage, 5).await?;
 
         Ok(azks)
     }
@@ -97,7 +97,8 @@ impl Azks {
                 label_i.push_str(i.to_string());
                 init_insertion_set.push((AkdLabel(label_i), AkdValue("world".to_string())));
             }
-            self.batch_insert_leaves(storage, init_insertion_set).await
+            self.batch_insert_leaves(storage, init_insertion_set).await?;
+            Ok(())
     }
 
     /// Inserts a single leaf and is only used for testing, since batching is more efficient.
