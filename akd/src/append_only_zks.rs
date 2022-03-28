@@ -229,6 +229,7 @@ impl Azks {
             self.get_latest_epoch(),
         )
         .await?;
+        // ozks: adjust for treenode changes and change value to "H(value, self.latest_epoch)"
         for node in insertion_set {
             let new_leaf = if append_only_usage {
                 get_leaf_node_without_hashing::<H, S>(

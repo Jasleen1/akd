@@ -58,8 +58,8 @@ pub struct TreeNode {
     /// The binary label for this node
     pub label: NodeLabel,
     /// The last epoch this node was updated in
-    /// OZKS: The epochs are no longer needed in the npde
     pub last_epoch: u64,
+    /// OZKS: The birth epochs are no longer needed in the node
     /// The epoch that this node was birthed in
     pub birth_epoch: u64,
     /// The label of this node's parent
